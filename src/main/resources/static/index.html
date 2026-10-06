@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M8 11h16M8 16h16M8 21h10' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="logo" aria-hidden="true"></span>Ledger</div>
+  <nav id="tabs" aria-label="Sections">
+    <a href="#accounts">Accounts</a>
+    <a href="#transfer">Transfer</a>
+    <a href="#journal">Journal</a>
+    <a href="#outbox">Outbox</a>
+    <a href="#reconciliation">Reconciliation</a>
+    <a href="#chaos">Chaos</a>
+  </nav>
+  <div class="bar-end"><span id="health" class="pill">checking</span><button id="key-button" class="ghost" hidden>API key</button></div>
+</header>
+<main id="view" aria-live="polite"></main>
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

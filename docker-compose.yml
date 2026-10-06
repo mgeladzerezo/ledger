@@ -1,0 +1,58 @@
+# One command: docker compose up --build   then open http://localhost:8206
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ledger
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ledger
+    ports:
+      - "5546:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  ledger:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # The chaos panel can kill this container's JVM on purpose; the restart policy brings it back.
+    restart: unless-stopped
+    ports:
+      - "8206:8206"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger
+      SPRING_DATASOURCE_USERNAME: ledger
+      SPRING_DATASOURCE_PASSWORD: ledger
+    command:
+      - --ledger.demo.enabled=true
+      - --ledger.chaos.enabled=true
+      - --ledger.security.api-keys.demo=demo-api-key
+      - --ledger.demo.consumer-url=http://consumer:8080/webhook
+      - --ledger.demo.consumer-secret=demo-webhook-secret-0123456789
+      - --ledger.demo.consumer-stats-url=http://consumer:8080/stats
+    healthcheck:
+      # The JRE image has no curl; bash's /dev/tcp is enough to read the health document.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8206 && printf 'GET /actuator/health HTTP/1.0\r\n\r\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  # The sample webhook consumer: verifies the HMAC, deduplicates by event id, keeps a projection.
+  consumer:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["java", "-cp", "/app/ledger.jar", "-Dloader.main=io.github.mgeladzerezo.ledger.consumer.SampleConsumerMain", "org.springframework.boot.loader.launch.PropertiesLauncher"]
+    environment:
+      CONSUMER_DB_URL: jdbc:postgresql://postgres:5432/ledger
+      CONSUMER_DB_USER: ledger
+      CONSUMER_DB_PASSWORD: ledger
+      CONSUMER_SECRET: demo-webhook-secret-0123456789
+      CONSUMER_PORT: "8080"
