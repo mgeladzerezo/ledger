@@ -18,8 +18,11 @@ import tools.jackson.databind.json.JsonMapper;
  * A small HTTP client for the ledger API built on the JDK client, used both by the in-process
  * tests and by the tests that run the application as a separate process. Going through real HTTP
  * keeps the tests honest about status codes, headers and JSON shapes.
+ *
+ * <p>Each instance owns one {@link HttpClient}, and each client owns a selector thread, so
+ * instances are meant to be shared and closed, not created per request.
  */
-public final class Api {
+public final class Api implements AutoCloseable {
 
     public static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -37,6 +40,12 @@ public final class Api {
 
     public String baseUrl() {
         return baseUrl;
+    }
+
+    /** Aborts in-flight requests and releases the threads of the underlying client. */
+    @Override
+    public void close() {
+        http.shutdownNow();
     }
 
     public Response get(String path) {

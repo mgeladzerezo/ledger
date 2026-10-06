@@ -299,8 +299,8 @@ class LedgerApiTest extends IntegrationTest {
 
     @Test
     void apiRequiresAValidKeyButHealthAndUiDoNot() {
-        Api anonymous = new Api(api.baseUrl(), null);
-        Api wrong = new Api(api.baseUrl(), "nope");
+        Api anonymous = client(null);
+        Api wrong = client("nope");
 
         assertThat(anonymous.get("/api/v1/accounts").status()).isEqualTo(401);
         assertThat(wrong.get("/api/v1/accounts").status()).isEqualTo(401);

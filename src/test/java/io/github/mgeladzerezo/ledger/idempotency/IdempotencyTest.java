@@ -209,7 +209,7 @@ class IdempotencyTest extends IntegrationTest {
     @Test
     void keysAreScopedToThePrincipal() {
         String key = key();
-        Api otherClient = new Api(api.baseUrl(), "other-key");
+        Api otherClient = client("other-key");
 
         api.transfer(alice, bob, 1_000, "USD", key).expect(201);
         Response other = otherClient.transfer(alice, bob, 700, "USD", key).expect(201);

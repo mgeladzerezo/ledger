@@ -1,5 +1,9 @@
 package io.github.mgeladzerezo.ledger.support;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +42,8 @@ public abstract class IntegrationTest {
 
     protected Api api;
 
+    private final List<Api> clients = new ArrayList<>();
+
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         PostgreSQLContainer postgres = SharedPostgres.instance();
@@ -48,6 +54,19 @@ public abstract class IntegrationTest {
 
     @BeforeEach
     void createClient() {
-        api = new Api("http://localhost:" + port, API_KEY);
+        api = client(API_KEY);
+    }
+
+    /** A client authenticating with the given key ({@code null} for none), closed after the test. */
+    protected Api client(String apiKey) {
+        Api client = new Api("http://localhost:" + port, apiKey);
+        clients.add(client);
+        return client;
+    }
+
+    @AfterEach
+    void closeClients() {
+        clients.forEach(Api::close);
+        clients.clear();
     }
 }

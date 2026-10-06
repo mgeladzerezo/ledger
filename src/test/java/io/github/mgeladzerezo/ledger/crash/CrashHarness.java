@@ -51,9 +51,7 @@ final class CrashHarness implements AutoCloseable {
 
     /** Starts a fresh process in place of the dead one. */
     void restart(String... extraArgs) {
-        if (process.isAlive()) {
-            process.kill();
-        }
+        process.kill();
         process = LedgerProcess.start(extraArgs);
     }
 
@@ -73,9 +71,7 @@ final class CrashHarness implements AutoCloseable {
 
     @Override
     public void close() {
-        if (process.isAlive()) {
-            process.kill();
-        }
+        process.kill();
         consumer.close();
     }
 }

@@ -1,6 +1,5 @@
 package io.github.mgeladzerezo.ledger.crash;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.file.Files;
@@ -29,12 +28,12 @@ final class LedgerProcess {
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     private final Process process;
-    private final int port;
+    private final Api api;
     private final Path log;
 
     private LedgerProcess(Process process, int port, Path log) {
         this.process = process;
-        this.port = port;
+        this.api = new Api("http://localhost:" + port, API_KEY);
         this.log = log;
     }
 
@@ -50,11 +49,13 @@ final class LedgerProcess {
                     + "; the crash tests run in the integration-test phase, after `package`");
         }
         PostgreSQLContainer postgres = SharedPostgres.instance();
+        Path logDirectory = Path.of(System.getProperty("ledger.crash.logs", "target/crash-it"));
         int port = freePort();
         List<String> command = new ArrayList<>(List.of(
                 Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-Xmx256m",
                 "-XX:TieredStopAtLevel=1",
+                "-Djava.io.tmpdir=" + logDirectory.toAbsolutePath(),
                 "-jar", jar.toAbsolutePath().toString(),
                 "--server.port=" + port,
                 "--spring.datasource.url=" + postgres.getJdbcUrl(),
@@ -71,13 +72,12 @@ final class LedgerProcess {
                 "--logging.level.root=WARN"));
         command.addAll(List.of(extraArgs));
         try {
-            Path logDirectory = Path.of(System.getProperty("ledger.crash.logs", "target/crash-it"));
             Files.createDirectories(logDirectory);
             Path log = logDirectory.resolve("ledger-" + COUNTER.incrementAndGet() + ".log");
             Process process = new ProcessBuilder(command)
                     .redirectErrorStream(true)
                     .redirectOutput(log.toFile())
-                    .directory(new File(System.getProperty("java.io.tmpdir")))
+                    .directory(logDirectory.toFile())
                     .start();
             LedgerProcess ledger = new LedgerProcess(process, port, log);
             ledger.awaitHealthy(Duration.ofSeconds(120));
@@ -87,8 +87,9 @@ final class LedgerProcess {
         }
     }
 
+    /** The one client for this process; it stops working when the process is killed or replaced. */
     Api api() {
-        return new Api("http://localhost:" + port, API_KEY);
+        return api;
     }
 
     boolean isAlive() {
@@ -112,7 +113,7 @@ final class LedgerProcess {
         }
     }
 
-    /** SIGKILL / TerminateProcess: no shutdown hooks, no graceful anything. */
+    /** SIGKILL / TerminateProcess: no shutdown hooks, no graceful anything. Safe to call on a dead process. */
     void kill() {
         process.destroyForcibly();
         try {
@@ -120,10 +121,10 @@ final class LedgerProcess {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        api.close();
     }
 
     private void awaitHealthy(Duration timeout) {
-        Api api = api();
         long deadline = System.nanoTime() + timeout.toNanos();
         while (System.nanoTime() < deadline) {
             if (!process.isAlive()) {

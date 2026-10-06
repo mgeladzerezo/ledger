@@ -20,8 +20,9 @@
     <properties>
         <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Heap cap for the test JVMs; the application processes forked by the crash tests set their own. -->
-        <test.heap>-Xmx512m</test.heap>
+        <!-- Heap cap for the test JVMs (the application processes forked by the crash tests set their own),
+             and temporary files (embedded Tomcat work directories) kept inside target/. -->
+        <test.heap>-Xmx512m -Djava.io.tmpdir=${project.build.directory}</test.heap>
         <!-- The soak test is long and randomised, so it only runs with -Psoak. -->
         <failsafe.excludedGroups>soak</failsafe.excludedGroups>
         <failsafe.groups/>
