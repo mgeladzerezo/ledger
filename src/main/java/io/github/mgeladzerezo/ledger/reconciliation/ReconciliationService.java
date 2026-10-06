@@ -31,7 +31,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class ReconciliationService {
 
     /** Arbitrary constant identifying the "scheduled reconciliation" advisory lock. */
-    private static final long SCHEDULER_LOCK = 0x4C45444745520001L;
+    static final long SCHEDULER_LOCK = 0x4C45444745520001L;
 
     private static final TypeReference<List<CheckResult>> CHECK_RESULTS = new TypeReference<>() {
     };
