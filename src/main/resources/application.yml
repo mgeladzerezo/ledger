@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: ledger
+  datasource:
+    # Defaults match docker-compose.yml's published Postgres port, for running the app from an IDE.
+    url: jdbc:postgresql://localhost:5546/ledger
+    username: ledger
+    password: ledger
+    hikari:
+      maximum-pool-size: 20
+      # a request that cannot get a connection fails fast instead of queueing for 30 s
+      connection-timeout: 10000
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    # Money is integer minor units. Reject 1.5 or "5" for an amount instead of silently coercing it.
+    deserialization:
+      accept-float-as-int: false
+    mapper:
+      allow-coercion-of-scalars: false
+
+server:
+  port: 8206
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+ledger:
+  idempotency:
+    retention: 24h
+    wait-timeout: 5s
+    purge-interval: 10m
+  posting:
+    lock-timeout: 10s
+  holds:
+    default-ttl: 7d
+    expiry-interval: 30s
+  outbox:
+    relay-enabled: true
+    poll-interval: 500ms
+    batch-size: 20
+    max-attempts: 8
+    backoff-base: 1s
+    backoff-max: 5m
+    http-timeout: 5s
+  reconciliation:
+    scheduled: true
+    interval: 60s
+    stuck-delivery-age: 5m
+  chaos:
+    enabled: false
+  demo:
+    enabled: false
