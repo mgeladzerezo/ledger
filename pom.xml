@@ -25,6 +25,8 @@
         <!-- The soak test is long and randomised, so it only runs with -Psoak. -->
         <failsafe.excludedGroups>soak</failsafe.excludedGroups>
         <failsafe.groups/>
+        <!-- -DskipUnitTests runs only the *IT classes (the crash tests). -->
+        <skipUnitTests>false</skipUnitTests>
     </properties>
 
     <dependencies>
@@ -86,6 +88,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>${test.heap}</argLine>
+                    <skipTests>${skipUnitTests}</skipTests>
                 </configuration>
             </plugin>
             <!--
@@ -118,25 +121,13 @@
 
     <profiles>
         <profile>
-            <!-- ./mvnw -B verify -Psoak : random kills under concurrent load (several minutes). -->
+            <!-- ./mvnw -B verify -Psoak : random kills under concurrent load, instead of the normal test suite. -->
             <id>soak</id>
             <properties>
                 <failsafe.groups>soak</failsafe.groups>
                 <failsafe.excludedGroups/>
-                <skipTests>false</skipTests>
-                <surefire.skip>true</surefire.skip>
+                <skipUnitTests>true</skipUnitTests>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>
