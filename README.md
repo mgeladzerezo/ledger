@@ -4,6 +4,8 @@ A double-entry payment ledger on Spring Boot 4 and PostgreSQL 16, built around o
 
 [![CI](https://github.com/mgeladzerezo/ledger/actions/workflows/ci.yml/badge.svg)](https://github.com/mgeladzerezo/ledger/actions/workflows/ci.yml)
 
+> **CI result.** On 7 October 2026 the workflow ran the complete suite on GitHub Actions (Ubuntu, Docker available) and it passed: 98 tests (87 plus the 11 process-kill crash cases), 0 failures ([run 37606219779](https://github.com/mgeladzerezo/ledger/actions/runs/37606219779)). The verification notes further down describe what had been run on this machine before that and are kept for the record.
+
 ## Architecture
 
 ```mermaid
